@@ -23,6 +23,7 @@ public class TruthTable {
     public boolean check() {
         // Generate all possible models
         List<Map<String, Boolean>> models = generateModels(new ArrayList<>(symbols));
+        boolean isEntailed = false;
 
         // Check each model
         for (Map<String, Boolean> model : models) {
@@ -30,13 +31,14 @@ public class TruthTable {
                 // If the query is true in a model where the knowledge base is also true,
                 // then the query is entailed by the knowledge base.
                 if (model.getOrDefault(query.symbol, false) == query.isPositive) {
-                    return true;
+                    isEntailed = true;
                 }
             }
+            System.out.println("Evaluation of model " + model + ": " + (evaluateModel(model) ? "true" : "false"));
         }
 
-        // If no such model is found, the query is not entailed by the knowledge base.
-        return false;
+        // Return whether the query is entailed by the knowledge base
+        return isEntailed;
     }
 
     private List<Map<String, Boolean>> generateModels(List<String> symbols) {
@@ -54,11 +56,15 @@ public class TruthTable {
         for (Map<String, Boolean> smallerModel : smallerModels) {
             Map<String, Boolean> trueModel = new HashMap<>(smallerModel);
             trueModel.put(symbol, true);
-            models.add(trueModel);
+            if (!models.contains(trueModel)) {
+                models.add(trueModel);
+            }
 
             Map<String, Boolean> falseModel = new HashMap<>(smallerModel);
             falseModel.put(symbol, false);
-            models.add(falseModel);
+            if (!models.contains(falseModel)) {
+                models.add(falseModel);
+            }
 
             System.out.println("Model with " + symbol + ": " + trueModel);
             System.out.println("Model without " + symbol + ": " + falseModel);
@@ -83,7 +89,6 @@ public class TruthTable {
                 // This clause is false, so the knowledge base is false
                 return false;
             }
-            System.out.println("Evaluation of model " + model + ": " + (clauseIsTrue ? "true" : "false"));
         }
 
         // All clauses are true, so the knowledge base is true
