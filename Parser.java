@@ -10,10 +10,12 @@ public class Parser {
     // Nested class to hold parsed knowledge base and query identifier
     public class Result {
         public List<Expression> knowledgeBase;
+        public List<Clause> hornClauses;
         public String query;
 
         public Result(List<Expression> knowledgeBase, String query) {
             this.knowledgeBase = knowledgeBase;
+            this.hornClauses = hornClauses;
             this.query = query;
         }
     }
@@ -45,7 +47,9 @@ public class Parser {
 
             // For each expression in the new expressions array
             for (String expression : expressions) {
-                knowledgeBase.add(parseExpression(expression.trim()));  // Trim any whitespace, parse the expression, then add to kb
+                Expression parsedExpression = parseExpression(expression.trim());
+                System.out.println("Parsed expression: " + parsedExpression);
+                knowledgeBase.add(parsedExpression);
             }
 
             query = sections[2].trim();     // Trim any whitespace from query and add to query variable
@@ -95,7 +99,7 @@ public class Parser {
                     i++;
                 }
                 i--; // Adjust for the extra increment
-                operands.push(new Expression(symbol.toString(), null, null));
+                operands.push(new Expression(symbol.toString()));
             }
         }
 
@@ -104,6 +108,48 @@ public class Parser {
         }
 
         return operands.pop();
+    }
+
+    public List<Clause> transformToClauses(List<Expression> knowledgeBase) {
+        List<Clause> clauses = new ArrayList<>();
+
+        for (Expression expression : knowledgeBase) {
+            Clause clause = new Clause();
+            transformExpressionToClause(expression, clause);
+            clauses.add(clause);
+            System.out.println("Transformed clause: " + clause);
+        }
+
+        return clauses;
+    }
+
+    private void transformExpressionToClause(Expression expression, Clause clause) {
+        if (expression.operator == null) {
+            // This is a symbol
+            clause.addLiteral(new Literal(expression.symbol, true)); // Use the symbol here, not the operator
+        } else if (expression.operator.equals("~")) {
+            // This is a negated symbol
+            clause.addLiteral(new Literal(expression.right.symbol, false)); // Use the symbol here, not the operator
+        } else if (expression.operator.equals("&")) {
+            // This is a conjunction, so split it into separate literals
+            transformExpressionToClause(expression.left, clause);
+            transformExpressionToClause(expression.right, clause);
+        } else if (expression.operator.equals("||")) {
+            // This is a disjunction, so create a new clause for each operand
+            Clause newClause = new Clause();
+            transformExpressionToClause(expression.left, newClause);
+            clause.addLiteral(new Literal(newClause.literals.get(0).symbol, newClause.literals.get(0).isPositive));
+            transformExpressionToClause(expression.right, clause);
+        } else if (expression.operator.equals("=>")) {
+            // This is an implication, so transform it to a disjunction and negate the left operand
+            transformExpressionToClause(new Expression("~", null, expression.left), clause);
+            transformExpressionToClause(expression.right, clause);
+        } else if (expression.operator.equals("<=>")) {
+            // This is a biconditional, so split it into two implications and handle each one separately
+            // Note that this assumes that the biconditional is the root of the expression
+            transformExpressionToClause(new Expression("=>", expression.left, expression.right), clause);
+            transformExpressionToClause(new Expression("=>", expression.right, expression.left), clause);
+        }
     }
 
     private int getPriority(char op) {
