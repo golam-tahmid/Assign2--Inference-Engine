@@ -8,7 +8,9 @@ public class Expression {
         this.operator = operator;
         this.left = left;
         this.right = right;
+        this.symbol = toString();  // Add this line
     }
+
     // Constructor for literals
     public Expression(String symbol) {
         this.symbol = symbol;
@@ -18,7 +20,7 @@ public class Expression {
     @Override
     public String toString() {
         if (left == null && right == null) {
-            return operator;
+            return symbol;
         }
         if (operator.equals("~")) {
             return operator + right.toString();
