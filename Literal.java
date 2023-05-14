@@ -7,4 +7,8 @@ public class Literal {
         this.isPositive = isPositive;
     }
 
+    @Override
+    public String toString() {
+        return (isPositive ? "" : "~") + symbol;
+    }
 }
