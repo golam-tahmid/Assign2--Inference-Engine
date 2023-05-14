@@ -1,5 +1,6 @@
 public class Expression {
     public String operator;
+    public String symbol;
     public Expression left;
     public Expression right;
 
@@ -7,6 +8,10 @@ public class Expression {
         this.operator = operator;
         this.left = left;
         this.right = right;
+    }
+    // Constructor for literals
+    public Expression(String symbol) {
+        this.symbol = symbol;
     }
 
     // Testing purposes, for printing parsed file
