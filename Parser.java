@@ -15,7 +15,7 @@ public class Parser {
 
         public Result(List<Expression> knowledgeBase, String query) {
             this.knowledgeBase = knowledgeBase;
-            this.hornClauses = hornClauses;
+            this.hornClauses = new ArrayList<>();
             this.query = query;
         }
     }
@@ -62,44 +62,44 @@ public class Parser {
         Stack<Character> operators = new Stack<>();
         Stack<Expression> operands = new Stack<>();
 
-        // Loops through each character in the input string
         for (int i = 0; i < input.length(); i++) {
             char ch = input.charAt(i);
 
-            // Check if character is an operator or parenthesis
-            if (ch == '(' || ch == '&' || ch == '|' || ch == '~' || ch == '=' || ch == '<') {
-                if (ch == '|') {
-                    i++; // Skip the next character for the || operator
-                    processOperators(operators, operands, 1);
+            if (ch == '(') {
+                operators.push(ch);
+            } else if (ch == '=') {
+                if (i + 1 < input.length() && input.charAt(i + 1) == '>') {
+                    operators.push('>');
+                    i++; // skip the next character
+                }
+            } else if (ch == '<') {
+                if (i + 2 < input.length() && input.charAt(i + 1) == '=' && input.charAt(i + 2) == '>') {
+                    operators.push('<');
+                    i += 2; // skip the next two characters
+                }
+            } else if (ch == '|') {
+                if (i + 1 < input.length() && input.charAt(i + 1) == '|') {
                     operators.push('|');
-                } else {
-                    if (ch == '=') {
-                        if (i + 1 < input.length() && input.charAt(i + 1) == '>') {
-                            i++; // Skip the '>' character for the => operator
-                        }
-                    } else if (ch == '<') {
-                        if (i + 2 < input.length() && input.charAt(i + 1) == '=' && input.charAt(i + 2) == '>') {
-                            i += 2; // Skip the '=>' characters for the <=> operator
-                        }
-                    }
-                    processOperators(operators, operands, getPriority(ch));
-                    operators.push(ch);
+                    i++; // skip the next character
                 }
             } else if (ch == ')') {
+                // process all operators until the opening parenthesis
                 while (!operators.isEmpty() && operators.peek() != '(') {
                     createExpression(operators, operands);
                 }
-                if (!operators.isEmpty()) {
-                    operators.pop(); // Remove the opening parenthesis
+                operators.pop(); // remove the '('
+            } else if (isOperator(ch)) {
+                while (!operators.isEmpty() && getPriority(operators.peek()) >= getPriority(ch)) {
+                    createExpression(operators, operands);
                 }
-            } else if (ch != ' ') {
-                StringBuilder symbol = new StringBuilder();
+                operators.push(ch);
+            } else if (Character.isLetterOrDigit(ch)) {
+                StringBuilder operand = new StringBuilder();
                 while (i < input.length() && Character.isLetterOrDigit(input.charAt(i))) {
-                    symbol.append(input.charAt(i));
-                    i++;
+                    operand.append(input.charAt(i++));
                 }
-                i--; // Adjust for the extra increment
-                operands.push(new Expression(symbol.toString()));
+                i--; // adjusting for extra increment
+                operands.push(new Expression(operand.toString()));
             }
         }
 
@@ -107,7 +107,11 @@ public class Parser {
             createExpression(operators, operands);
         }
 
-        return operands.pop();
+        return operands.isEmpty() ? null : operands.pop();
+    }
+
+    private boolean isOperator(char ch) {
+        return ch == '~' || ch == '&' || ch == '|' || ch == '>' || ch == '<';
     }
 
     public List<Clause> transformToClauses(List<Expression> knowledgeBase) {
@@ -124,6 +128,7 @@ public class Parser {
     }
 
     private void transformExpressionToClause(Expression expression, Clause clause) {
+        System.out.println("Before transformation: " + expression);
         if (expression.operator == null) {
             // This is a symbol
             clause.addLiteral(new Literal(expression.symbol, true)); // Use the symbol here, not the operator
@@ -150,20 +155,20 @@ public class Parser {
             transformExpressionToClause(new Expression("=>", expression.left, expression.right), clause);
             transformExpressionToClause(new Expression("=>", expression.right, expression.left), clause);
         }
+        System.out.println("After transformation: " + clause);
     }
 
-    private int getPriority(char op) {
-        switch (op) {
+    private int getPriority(char ch) {
+        switch (ch) {
             case '~':
                 return 4;
             case '&':
                 return 3;
             case '|':
+                return 2;
+            case '>': // for => operator
+            case '<': // for <=> operator
                 return 1;
-            case '=':
-                return 2;
-            case '<':
-                return 2;
             default:
                 return 0;
         }
@@ -178,6 +183,9 @@ public class Parser {
 
 
     private void createExpression(Stack<Character> operators, Stack<Expression> operands) {
+        if (operators.isEmpty()) {
+            throw new IllegalStateException("No more operators to process");
+        }
         char op = operators.pop();
         String operator = null;
 
@@ -191,12 +199,14 @@ public class Parser {
             case '|':
                 operator = "||";
                 break;
-            case '=':
+            case '>':
                 operator = "=>";
                 break;
             case '<':
                 operator = "<=>";
                 break;
+            default:
+                throw new IllegalArgumentException("Unexpected operator: " + op);
         }
 
         Expression right = operands.pop();
