@@ -118,45 +118,65 @@ public class Parser {
         List<Clause> clauses = new ArrayList<>();
 
         for (Expression expression : knowledgeBase) {
-            Clause clause = new Clause();
-            transformExpressionToClause(expression, clause);
-            clauses.add(clause);
-            System.out.println("Transformed clause: " + clause);
+            List<Clause> transformedClauses = transformExpressionToClauses(expression);
+            clauses.addAll(transformedClauses);
+            transformedClauses.forEach(c -> System.out.println("Transformed clause: " + c));
         }
 
         return clauses;
     }
 
-    private void transformExpressionToClause(Expression expression, Clause clause) {
-        System.out.println("Before transformation: " + expression);
+
+    private List<Clause> transformExpressionToClauses(Expression expression) {
+        List<Clause> clauses = new ArrayList<>();
+
         if (expression.operator == null) {
             // This is a symbol
-            clause.addLiteral(new Literal(expression.symbol, true)); // Use the symbol here, not the operator
+            Clause clause = new Clause();
+            clause.addLiteral(new Literal(expression.symbol, true));
+            clauses.add(clause);
         } else if (expression.operator.equals("~")) {
             // This is a negated symbol
-            clause.addLiteral(new Literal(expression.right.symbol, false)); // Use the symbol here, not the operator
+            Clause clause = new Clause();
+            clause.addLiteral(new Literal(expression.right.symbol, false));
+            clauses.add(clause);
         } else if (expression.operator.equals("&")) {
             // This is a conjunction, so split it into separate literals
-            transformExpressionToClause(expression.left, clause);
-            transformExpressionToClause(expression.right, clause);
+            clauses.addAll(transformExpressionToClauses(expression.left));
+            clauses.addAll(transformExpressionToClauses(expression.right));
         } else if (expression.operator.equals("||")) {
             // This is a disjunction, so create a new clause for each operand
-            Clause newClause = new Clause();
-            transformExpressionToClause(expression.left, newClause);
-            clause.addLiteral(new Literal(newClause.literals.get(0).symbol, newClause.literals.get(0).isPositive));
-            transformExpressionToClause(expression.right, clause);
+            Clause clause = new Clause();
+            clause.getLiterals().addAll(transformExpressionToLiterals(expression));
+            clauses.add(clause);
         } else if (expression.operator.equals("=>")) {
             // This is an implication, so transform it to a disjunction and negate the left operand
-            transformExpressionToClause(new Expression("~", null, expression.left), clause);
-            transformExpressionToClause(expression.right, clause);
+            Expression negatedLeft = new Expression("~", null, expression.left);
+            Expression disjunction = new Expression("||", negatedLeft, expression.right);
+            clauses.addAll(transformExpressionToClauses(disjunction));
         } else if (expression.operator.equals("<=>")) {
             // This is a biconditional, so split it into two implications and handle each one separately
             // Note that this assumes that the biconditional is the root of the expression
-            transformExpressionToClause(new Expression("=>", expression.left, expression.right), clause);
-            transformExpressionToClause(new Expression("=>", expression.right, expression.left), clause);
+            clauses.addAll(transformExpressionToClauses(new Expression("=>", expression.left, expression.right)));
+            clauses.addAll(transformExpressionToClauses(new Expression("=>", expression.right, expression.left)));
         }
-        System.out.println("After transformation: " + clause);
+
+        return clauses;
     }
+
+    private List<Literal> transformExpressionToLiterals(Expression expression) {
+        List<Literal> literals = new ArrayList<>();
+        if (expression.operator == null) {
+            literals.add(new Literal(expression.symbol, true));
+        } else if (expression.operator.equals("~")) {
+            literals.add(new Literal(expression.right.symbol, false));
+        } else if (expression.operator.equals("||")) {
+            literals.addAll(transformExpressionToLiterals(expression.left));
+            literals.addAll(transformExpressionToLiterals(expression.right));
+        }
+        return literals;
+    }
+
 
     private int getPriority(char ch) {
         switch (ch) {
