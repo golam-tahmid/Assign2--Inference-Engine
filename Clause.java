@@ -13,6 +13,10 @@ public class Clause {
         literals.add(literal);
     }
 
+    public List<Literal> getLiterals() {
+        return literals;
+    }
+
     @Override
     public String toString() {
         return literals.stream()
