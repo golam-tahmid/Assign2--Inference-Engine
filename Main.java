@@ -45,7 +45,7 @@ public class Main {
                 TruthTable tt = new TruthTable(clauses, queryLiteral);
                 boolean entails = tt.check();
                 if (entails) {
-                    System.out.println("YES");
+                    System.out.println("YES: " + tt.getModelsEntailment());
                 } else {
                     System.out.println("NO");
                 }
