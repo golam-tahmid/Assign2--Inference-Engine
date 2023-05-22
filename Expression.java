@@ -1,5 +1,6 @@
 public class Expression {
     public String operator;
+    public String symbol;
     public Expression left;
     public Expression right;
 
@@ -7,13 +8,19 @@ public class Expression {
         this.operator = operator;
         this.left = left;
         this.right = right;
+        this.symbol = toString();  
+    }
+
+    // Constructor for literals
+    public Expression(String symbol) {
+        this.symbol = symbol;
     }
 
     // Testing purposes, for printing parsed file
     @Override
     public String toString() {
         if (left == null && right == null) {
-            return operator;
+            return symbol;
         }
         if (operator.equals("~")) {
             return operator + right.toString();
