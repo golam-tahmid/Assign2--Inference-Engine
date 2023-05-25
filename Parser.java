@@ -185,7 +185,9 @@ public class Parser {
             clause.setHead(new Literal(expression.symbol, true));
             hornClauses.add(clause);
         } else if (expression.operator.equals("~")) {
-            // ... rest of the code ...
+            HornClause clause = new HornClause();
+            clause.setHead(new Literal(expression.right.symbol, false));
+            hornClauses.add(clause);
         } else if (expression.operator.equals("&")) {
             // This is a conjunction. For a conjunction where the left side is a symbol
             // and the right side is an implication, create a single Horn clause instead of two.
