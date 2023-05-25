@@ -9,18 +9,20 @@ public class TruthTable
 
     public TruthTable(List<Clause> knowledgeBase, Literal query)
     {
+        // store kb and query
         this.knowledgeBase = knowledgeBase;
         this.query = query;
 
         // Extract all symbols from the knowledge base
         this.symbols = new HashSet<>();
-        for (Clause clause : knowledgeBase)
+        for (Clause clause : knowledgeBase) //each clause in kb
         {
-            for (Literal literal : clause.literals)
+            for (Literal literal : clause.literals) // each literal in clause
             {
-                symbols.add(literal.symbol);
+                symbols.add(literal.symbol);    // add symbol to hash set
             }
         }
+        // REMOVE
         System.out.println("Knowledge Base: " + this.knowledgeBase);
         System.out.println("Query: " + this.query);
     }
@@ -49,8 +51,10 @@ public class TruthTable
                     modelsEntailment++;
                 }
             }
+            // REMOVE
             System.out.println("Evaluation of model " + model + ": " + (evaluateModel(model) ? "true" : "false"));
         }
+        // REMOVE
         // Print the number of models where the KB and query are true
         System.out.println("Number of models where KB is true: " + modelsKB);
         System.out.println("Number of models where KB entails the query: " + modelsEntailment);
@@ -74,20 +78,24 @@ public class TruthTable
         List<Map<String, Boolean>> models = new ArrayList<>();
         for (Map<String, Boolean> smallerModel : smallerModels)
         {
+            // create a new model where symbol is true
             Map<String, Boolean> trueModel = new HashMap<>(smallerModel);
             trueModel.put(symbol, true);
+
+            // add model to list
             if (!models.contains(trueModel))
             {
                 models.add(trueModel);
             }
 
+            // as above but for false
             Map<String, Boolean> falseModel = new HashMap<>(smallerModel);
             falseModel.put(symbol, false);
             if (!models.contains(falseModel))
             {
                 models.add(falseModel);
             }
-
+            // REMOVE
             System.out.println("Model with " + symbol + ": " + trueModel);
             System.out.println("Model without " + symbol + ": " + falseModel);
         }
@@ -114,7 +122,7 @@ public class TruthTable
                 // Determine the truth value of the literal in the current model
                 boolean literalIsTrue = literal.isPositive ? valueInModel : !valueInModel;
 
-                // If the literal is true, the entire clause is true (since we're dealing with disjunctions)
+                // if the literal is true, the entire clause is true
                 if (literalIsTrue)
                 {
                     clauseIsTrue = true;

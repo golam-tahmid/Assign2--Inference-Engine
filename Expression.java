@@ -18,7 +18,7 @@ public class Expression
         this.symbol = symbol;
     }
 
-    // Testing purposes, for printing parsed file
+    // Testing and debug purposes, for printing parsed file
     @Override
     public String toString()
     {

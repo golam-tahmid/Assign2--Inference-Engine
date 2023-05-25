@@ -58,6 +58,7 @@ public class Parser
             for (String expression : expressions)
             {
                 Expression parsedExpression = parseExpression(expression.trim());
+                // REMOVE
                 System.out.println("Parsed expression: " + parsedExpression);
                 knowledgeBase.add(parsedExpression);
             }
@@ -156,9 +157,11 @@ public class Parser
         // for every expression in the knowledge base
         for (Expression expression : knowledgeBase)
         {
-            System.out.println("Transforming expression: " + expression); // Add debug print statement here
+            // REMOVE
+            System.out.println("Transforming expression: " + expression);
             List<Clause> transformedClauses = transformExpressionToClauses(expression); // call the transform expression to clauses method
             clauses.addAll(transformedClauses); // add them to the list
+            // REMOVE
             transformedClauses.forEach(c -> System.out.println("Transformed clause: " + c));
         }
 
@@ -175,6 +178,7 @@ public class Parser
         {
             List<HornClause> transformedClauses = transformExpressionToHornClauses(expression); // calls the expression to horn clauses method
             HornClauses.addAll(transformedClauses);
+            // REMOVE
             transformedClauses.forEach(c -> System.out.println("Transformed clause: " + c));
         }
 
@@ -184,7 +188,8 @@ public class Parser
     //version for truth table checking, propositional logic, each clause is a disjunction of literals
     private List<Clause> transformExpressionToClauses(Expression expression)
     {
-        System.out.println("Inside transformExpressionToClauses with expression: " + expression); // Add debug print statement here
+        // REMOVE
+        System.out.println("Inside transformExpressionToClauses with expression: " + expression);
 
         if (expression.operator == null || expression.operator.equals("~"))
         {
@@ -308,9 +313,10 @@ public class Parser
     {
         List<Literal> literals = new ArrayList<>();
 
+        // REMOVE
         System.out.println("Inside transformExpressionToLiterals with expression: " + expression);
 
-        if (expression.operator == null) // symbol
+        if (expression.operator == null) // no operator so symbol
         {
             literals.add(new Literal(expression.symbol, true));
         }
@@ -328,24 +334,35 @@ public class Parser
         }
         else if (expression.operator.equals("||") || expression.operator.equals("&"))
         {
+            // If the expression is a conjunction or disjunction,
+            // apply this method to both the left and right side of the expression
             literals.addAll(transformExpressionToLiterals(expression.left));
             literals.addAll(transformExpressionToLiterals(expression.right));
         }
         else if (expression.operator.equals("=>"))
         {
+            // If the expression is an implication,
+            // transform it into a disjunction with the left operand negated
             Expression negatedLeft = negateExpression(expression.left);
             Expression disjunction = new Expression("||", negatedLeft, expression.right);
+
+            // apply this method to the new disjunction
             literals.addAll(transformExpressionToLiterals(disjunction));
         }
         else if (expression.operator.equals("<=>"))
         {
+            // If the expression is a biconditional,
+            // transform it into a conjunction of two implications
             Expression leftImplication = new Expression("=>", expression.left, expression.right);
             Expression rightImplication = new Expression("=>", expression.right, expression.left);
             Expression conjunction = new Expression("&", leftImplication, rightImplication);
+
+            // apply this method to the new conjuction
             literals.addAll(transformExpressionToLiterals(conjunction));
         }
         else
         {
+            // if something goes wrong
             System.out.println("Unhandled operator in transformExpressionToLiterals: " + expression.operator);
         }
         return literals;
@@ -354,6 +371,7 @@ public class Parser
 
 
     // as above but for singular expressions, used in transform expression to horn clauses method
+    // much simpler as doesn't need to deal with complex expressions
     private Literal transformExpressionToLiteral(Expression expression)
     {
         if (expression.operator == null) //symbol
@@ -398,7 +416,7 @@ public class Parser
         {
             throw new IllegalStateException("No more operators to process");
         }
-        char op = operators.pop(); //pop operator from the stack
+        char op = operators.pop(); // pop operator from the stack
         String operator = null;
 
         // set operator string value to operator popped
@@ -428,11 +446,12 @@ public class Parser
         operands.push(new Expression(operator, left, right));
     }
 
+    // negates expressions
     private Expression negateExpression(Expression expression)
     {
         if (expression.operator == null)
         {
-            // This is a symbol, so simply negate it
+            // This is a symbol, so negate it
             return new Expression("~", null, new Expression(expression.symbol));
         }
         else if (expression.operator.equals("~"))

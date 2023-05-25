@@ -22,6 +22,7 @@ public class Main
             // Parse the text file
             Parser.Result result = parser.parse(filename);
 
+            // REMOVE
             // Printing results of parsing kb for testing purposes
             System.out.println("Parsed knowledge base:");
             for (Expression expression : result.knowledgeBase)

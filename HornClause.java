@@ -26,7 +26,7 @@ public class HornClause
         this.body.add(literal);
     }   // add to body method
 
-    // toString for printing statements for debugging purposes
+    // toString for printing statements for debug purposes
     @Override
     public String toString()
     {
