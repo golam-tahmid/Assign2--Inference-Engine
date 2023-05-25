@@ -56,12 +56,13 @@ public class Main {
 
             } else if (method.equals("BC")) {
                 // Transform the knowledge base into a list of clauses
-                List<Clause> clauses = parser.transformToClauses(result.knowledgeBase);
+                List<HornClause> clauses = parser.transformToHornClauses(result.knowledgeBase);
                 // Use backward chaining
                 BackwardChaining bc = new BackwardChaining(clauses, queryLiteral);
                 boolean entails = bc.inference();
                 if (entails) {
-                    System.out.println("YES");
+                    System.out.print("YES: ");
+                    bc.printInferredLiterals();
                 } else {
                     System.out.println("NO");
                 }

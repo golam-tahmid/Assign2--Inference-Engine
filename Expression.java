@@ -8,7 +8,6 @@ public class Expression {
         this.operator = operator;
         this.left = left;
         this.right = right;
-        this.symbol = toString();  // Add this line
     }
 
     // Constructor for literals

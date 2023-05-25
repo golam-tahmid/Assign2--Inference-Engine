@@ -1,35 +1,35 @@
-import java.util.ArrayList;
-import java.util.List;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.*;
+import java.util.stream.Collectors;
 
 public class ForwardChaining {
     private List<HornClause> clauses;
     private Literal query;
-    private List<Literal> inferredLiterals; // List to keep track of inferred literals
+    private LinkedHashSet<Literal> inferred; // Using LinkedHashSet to keep the order and disallow duplicates
 
     public ForwardChaining(List<HornClause> clauses, Literal query) {
         this.clauses = clauses;
         this.query = query;
-        this.inferredLiterals = new ArrayList<>();
+        this.inferred = new LinkedHashSet<>();
+
+        // Add initial facts to the inferred set
+        for (HornClause clause : clauses) {
+            if (clause.body.isEmpty()) {
+                this.inferred.add(clause.head);
+            }
+        }
     }
 
     public boolean inference() {
-        Set<Literal> inferred = new HashSet<>();
-
         while (true) {
             boolean newInferenceMade = false;
 
             for (HornClause clause : clauses) {
-                if (inferred.containsAll(clause.body)) {
-                    if (clause.head != null && !inferred.contains(clause.head)) {
-                        inferred.add(clause.head);
-                        inferredLiterals.add(clause.head); // Add the literal to the inferred literals list
-                        newInferenceMade = true;
+                if (inferred.containsAll(clause.body) && (clause.head != null && !inferred.contains(clause.head))) {
+                    inferred.add(clause.head);
+                    newInferenceMade = true;
 
-                        if (clause.head.equals(query)) {
-                            return true;
-                        }
+                    if (clause.head.equals(query)) {
+                        return true;
                     }
                 }
             }
@@ -43,10 +43,14 @@ public class ForwardChaining {
     }
 
     public void printInferredLiterals() {
-        for (Literal literal : inferredLiterals) {
-            System.out.print(literal.symbol + ", ");
-        }
-        System.out.println();
+        List<Literal> literals = new ArrayList<>(inferred);
+        String inferredString = literals.stream()
+                .map(literal -> literal.symbol)
+                .collect(Collectors.joining(", "));
+        System.out.println(inferredString);
     }
+
 }
+
+
 

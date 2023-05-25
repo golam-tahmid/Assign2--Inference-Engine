@@ -1,16 +1,19 @@
 import java.util.*;
+import java.util.stream.Collectors;
 
 public class BackwardChaining {
-    private List<Clause> clauses;
+    private List<HornClause> clauses;
     private Literal query;
+    private LinkedHashSet<Literal> inferred;
 
-    public BackwardChaining(List<Clause> clauses, Literal query) {
+    public BackwardChaining(List<HornClause> clauses, Literal query) {
         this.clauses = clauses;
         this.query = query;
+        this.inferred = new LinkedHashSet<>();
     }
 
     public boolean inference() {
-        return backwardChain(Collections.singleton(query));
+        return backwardChain(new LinkedHashSet<>(Collections.singleton(query)));
     }
 
     private boolean backwardChain(Set<Literal> goals) {
@@ -18,41 +21,38 @@ public class BackwardChaining {
             Literal literal = goals.iterator().next();
             goals.remove(literal);
 
-            // if the literal is negative and is in the KB, remove it from goals
-            if (!literal.isPositive && inKnowledgeBase(new Literal(literal.symbol, true))) {
-                goals.remove(literal);
-                continue;
-            }
-            // if the literal is positive and is in the KB, remove it from goals
-            if (literal.isPositive && inKnowledgeBase(literal)) {
-                goals.remove(literal);
+            // if the literal is already inferred, skip
+            if (alreadyInferred(literal)) {
                 continue;
             }
 
             boolean newGoalAdded = false;
-            for (Clause clause : clauses) {
-                if (clause.getLiterals().contains(literal)) {
-                    for (Literal lit : clause.getLiterals()) {
-                        if (!lit.equals(literal)) {
-                            goals.add(lit);
-                            newGoalAdded = true;
-                        }
-                    }
+            for (HornClause clause : clauses) {
+                if (clause.head != null && clause.head.equals(literal)) {
+                    inferred.add(literal);
+                    goals.addAll(clause.body);
+                    newGoalAdded = true;
                 }
             }
             if (!newGoalAdded) {
                 return false;
             }
+            inferred.add(literal);  // Add the current goal to the inferred set
         }
         return true;
     }
 
-    private boolean inKnowledgeBase(Literal literal) {
-        for (Clause clause : clauses) {
-            if (clause.getLiterals().contains(literal)) {
-                return true;
-            }
-        }
-        return false;
+    private boolean alreadyInferred(Literal literal) {
+        return inferred.contains(literal);
     }
+
+
+    public void printInferredLiterals() {
+        List<Literal> literals = new ArrayList<>(inferred);
+        String inferredString = literals.stream()
+                .map(literal -> literal.symbol)
+                .collect(Collectors.joining(", "));
+        System.out.println(inferredString);
+    }
+
 }

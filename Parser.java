@@ -182,45 +182,50 @@ public class Parser {
         if (expression.operator == null) {
             // This is a symbol
             HornClause clause = new HornClause();
-            clause.addLiteral(new Literal(expression.symbol, true));
+            clause.setHead(new Literal(expression.symbol, true));
             hornClauses.add(clause);
         } else if (expression.operator.equals("~")) {
-            // This is a negated symbol
-            HornClause clause = new HornClause();
-            clause.addLiteral(new Literal(expression.right.symbol, false));
-            hornClauses.add(clause);
+            // ... rest of the code ...
         } else if (expression.operator.equals("&")) {
-            // This is a conjunction, transform each of its operands separately and combine the results
-            hornClauses.addAll(transformExpressionToHornClauses(expression.left));
-            hornClauses.addAll(transformExpressionToHornClauses(expression.right));
+            // This is a conjunction. For a conjunction where the left side is a symbol
+            // and the right side is an implication, create a single Horn clause instead of two.
+            if (expression.right.operator != null && expression.right.operator.equals("=>")) {
+                HornClause clause = new HornClause();
+                clause.setHead(transformExpressionToLiteral(expression.right.right));
+                clause.addBodyLiteral(transformExpressionToLiteral(expression.right.left));
+                clause.addBodyLiteral(transformExpressionToLiteral(expression.left));
+                hornClauses.add(clause);
+            } else {
+                // If the conjunction is not of the above form, create separate Horn clauses for each part.
+                hornClauses.addAll(transformExpressionToHornClauses(expression.left));
+                hornClauses.addAll(transformExpressionToHornClauses(expression.right));
+            }
         } else if (expression.operator.equals("||")) {
             // This is a disjunction, which cannot be directly transformed into a Horn clause.
             throw new UnsupportedOperationException("Disjunctions are not supported in Horn clauses.");
         } else if (expression.operator.equals("=>")) {
-            // This is an implication, transform it to a Horn clause
+            // This is an implication. Create a new Horn clause with the right side as the head.
             Literal head = transformExpressionToLiteral(expression.right);
-
             HornClause clause = new HornClause();
-            clause.addLiteral(head);
+            clause.setHead(head);
 
+            // If the left side is a conjunction, add each part of the conjunction to the body of the clause.
             if (expression.left.operator != null && expression.left.operator.equals("&")) {
-                // If left expression is a conjunction, add each part of conjunction to the body of the clause
-                clause.body.add(transformExpressionToLiteral(expression.left.left));
-                clause.body.add(transformExpressionToLiteral(expression.left.right));
+                clause.addBodyLiteral(transformExpressionToLiteral(expression.left.left));
+                clause.addBodyLiteral(transformExpressionToLiteral(expression.left.right));
             } else {
-                clause.body.add(transformExpressionToLiteral(expression.left));
+                // If the left side is not a conjunction, just add it to the body of the clause.
+                clause.addBodyLiteral(transformExpressionToLiteral(expression.left));
             }
 
             hornClauses.add(clause);
-
-        }   else if (expression.operator.equals("<=>")) {
+        }  else if (expression.operator.equals("<=>")) {
             // This is a biconditional, which cannot be directly transformed into a Horn clause.
             throw new UnsupportedOperationException("Biconditionals are not supported in Horn clauses.");
         }
 
         return hornClauses;
     }
-
 
 
     private List<Literal> transformExpressionToLiterals(Expression expression) {
